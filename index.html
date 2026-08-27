@@ -1,0 +1,40 @@
+<!doctype html><html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Immersive Window S2.3 Lite</title>
+<style>
+:root{--x:0;--y:0;--z:0}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080a0e;color:white;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#scene{position:absolute;inset:0;overflow:hidden}.l{position:absolute;inset:-7%;background-size:cover;background-position:center;will-change:transform}
+#bg{background-image:url("assets/background.jpg");transform:translate(calc(var(--x)*-.018px),calc(var(--y)*.012px)) scale(calc(1.055 + var(--z)*.00004))}
+#mid{background-image:url("assets/mid.png");transform:translate(calc(var(--x)*-.08px),calc(var(--y)*.035px)) scale(calc(1.065 + var(--z)*.00007))}
+#empire{background-image:url("assets/empire.png");transform:translate(calc(var(--x)*-.22px),calc(var(--y)*.075px)) scale(calc(1.078 + var(--z)*.00012))}
+#right{background-image:url("assets/right.png");transform:translate(calc(var(--x)*-.35px),calc(var(--y)*.10px)) scale(calc(1.085 + var(--z)*.00016))}
+#fore{background-image:url("assets/foreground.png");transform:translate(calc(var(--x)*-.52px),calc(var(--y)*.15px)) scale(calc(1.095 + var(--z)*.00022))}
+#glow{position:absolute;inset:0;background:radial-gradient(circle at 78% 52%,#ffad6a38,transparent 27%);mix-blend-mode:screen}
+#mullion{position:absolute;left:31%;top:0;bottom:0;width:2.6vw;background:linear-gradient(90deg,#090b0e,#1b1f25,#090b0e);box-shadow:0 0 22px #000b}
+#top{position:absolute;left:0;right:0;top:0;height:max(4.2vh,env(safe-area-inset-top));background:#0d0f13}
+#sill{position:absolute;left:0;right:0;bottom:0;height:6vh;background:linear-gradient(#171a20,#0b0d11)}
+#bed{position:absolute;left:-8%;right:-8%;bottom:-8%;height:23%;background:radial-gradient(ellipse at 50% 12%,#363c44,#20242a 45%,#101318 82%);border-radius:50% 50% 0 0/24% 24% 0 0}
+#hud{position:absolute;left:12px;right:12px;top:max(12px,env(safe-area-inset-top));display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.card{background:#05070b99;border:1px solid #ffffff24;border-radius:14px;padding:10px 12px;backdrop-filter:blur(14px)}
+#title{font-size:13px;font-weight:800}#sub,#read{font-size:10.5px;color:#ffffffc9;margin-top:3px}#read{text-align:right;line-height:1.45}
+#camwrap{position:absolute;right:12px;top:96px;width:92px;height:124px;border-radius:14px;overflow:hidden;border:1px solid #ffffff28;display:none;background:#000}#cam{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+#hint{position:absolute;left:12px;right:12px;bottom:68px;background:#05070a99;border:1px solid #ffffff18;padding:8px;border-radius:12px;font-size:10.5px;text-align:center}
+#controls{position:absolute;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:8px}button{flex:1;border:1px solid #ffffff24;background:#090c11d9;color:#fff;padding:12px;border-radius:13px;font-weight:700}
+#status{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);background:#05070be8;padding:10px;border-radius:12px;font-size:11px;opacity:0;transition:.2s}.show{opacity:1!important}
+</style></head><body>
+<div id="scene"><div id="bg" class="l"></div><div id="mid" class="l"></div><div id="empire" class="l"></div><div id="right" class="l"></div><div id="fore" class="l"></div><div id="glow"></div><div id="top"></div><div id="mullion"></div><div id="sill"></div><div id="bed"></div></div>
+<div id="hud"><div class="card"><div id="title">IMMERSIVE WINDOW — S2.3 LITE</div><div id="sub">NYC · separated 2.5D layers · Face Tracking</div></div><div id="read" class="card">X 0 mm<br>Y 0 mm<br>Z 0 mm<br>MODE SAFE</div></div>
+<div id="camwrap"><video id="cam" autoplay muted playsinline></video></div><div id="hint">Đặt iPhone cố định · bật tracking · Calibrate · dịch đầu chậm 10–20 cm.</div>
+<div id="controls"><button id="start">Bật Face Tracking</button><button id="cal">Calibrate</button></div><div id="status"></div>
+<script type="module">
+import {FilesetResolver,FaceDetector} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/+esm";
+const R=document.documentElement,cam=document.querySelector("#cam"),wrap=document.querySelector("#camwrap"),start=document.querySelector("#start"),cal=document.querySelector("#cal"),read=document.querySelector("#read"),status=document.querySelector("#status");
+let det,running=false,last=-1,base=null,x=0,y=0,z=0,seen=0;const C=(v,a,b)=>Math.max(a,Math.min(b,v)),L=(a,b,k)=>a+(b-a)*k;
+function toast(s){status.textContent=s;status.classList.add("show");setTimeout(()=>status.classList.remove("show"),1600)}
+function apply(mode){R.style.setProperty("--x",x);R.style.setProperty("--y",y);R.style.setProperty("--z",z);read.innerHTML=`X ${(x*4).toFixed(0)} mm<br>Y ${(-y*3).toFixed(0)} mm<br>Z ${(z*3).toFixed(0)} mm<br>MODE ${mode}`}
+async function init(){if(det)return;toast("Đang tải Face Detector...");const v=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm");det=await FaceDetector.createFromOptions(v,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite"},runningMode:"VIDEO",minDetectionConfidence:.55})}
+function setBase(b){base={cx:(b.originX+b.width/2)/cam.videoWidth,cy:(b.originY+b.height/2)/cam.videoHeight,w:b.width/cam.videoWidth};x=y=z=0;toast("Đã calibrate")}
+async function begin(){try{await init();let s=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:640},height:{ideal:480},frameRate:{ideal:30,max:30}},audio:false});cam.srcObject=s;await cam.play();wrap.style.display="block";running=true;start.textContent="Face Tracking: ON";requestAnimationFrame(loop)}catch(e){console.error(e);toast("Kiểm tra quyền Camera của Safari rồi tải lại trang.")}}
+function loop(){if(!running)return;if(cam.readyState>=2&&cam.currentTime!==last){last=cam.currentTime;let rr=det.detectForVideo(cam,performance.now()),b=rr.detections?.[0]?.boundingBox;if(b){let cx=(b.originX+b.width/2)/cam.videoWidth,cy=(b.originY+b.height/2)/cam.videoHeight,w=b.width/cam.videoWidth;seen=performance.now();if(!base)setBase(b);x=L(x,C((base.cx-cx)*400,-65,65),.16);y=L(y,C((cy-base.cy)*330,-50,50),.16);z=L(z,C(((w-base.w)/Math.max(.06,base.w))*100,-45,60),.16);apply("FACE")}}if(base&&performance.now()-seen>700){x=L(x,0,.04);y=L(y,0,.04);z=L(z,0,.04);apply("SAFE")}requestAnimationFrame(loop)}
+start.onclick=()=>{if(!running)begin()};cal.onclick=()=>{base=null;toast("Nhìn thẳng vào camera")};apply("SAFE");
+</script></body></html>
