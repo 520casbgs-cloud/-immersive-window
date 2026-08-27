@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#05070a">
+<title>Immersive Window S2.5</title>
+<style>
+:root{
+  --hx:0; --hy:0; --hz:0;
+  --worldX:0px; --worldY:0px; --worldScale:1.08;
+  --nearX:0px; --nearY:0px; --nearScale:1.08;
+  --midX:0px; --midY:0px; --midScale:1.08;
+  --farX:0px; --farY:0px; --farScale:1.08;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070a;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+#app{position:relative;width:100%;height:100%;overflow:hidden;background:#05070a}
+#window{position:absolute;inset:0;overflow:hidden;background:#0b0d11;perspective:1200px}
+
+/* Overscanned layers so head-coupled motion reveals extra image instead of empty edges */
+.layer{
+  position:absolute;
+  inset:-11%;
+  background-size:cover;
+  background-position:center center;
+  background-repeat:no-repeat;
+  transform-origin:50% 50%;
+  will-change:transform;
+  backface-visibility:hidden;
+}
+#bg{
+  background-image:url("assets/background.jpg");
+  transform:translate3d(var(--farX),var(--farY),0) scale(var(--farScale));
+  filter:saturate(1.03) contrast(1.01) brightness(.98);
+}
+#mid{
+  background-image:url("assets/mid.png");
+  transform:translate3d(var(--midX),var(--midY),0) scale(var(--midScale));
+  filter:saturate(1.035) contrast(1.012);
+}
+#emp{
+  background-image:url("assets/empire.png");
+  transform:translate3d(var(--worldX),var(--worldY),0) scale(var(--worldScale));
+  filter:saturate(1.04) contrast(1.015);
+}
+#right{
+  background-image:url("assets/right.png");
+  transform:translate3d(var(--nearX),var(--nearY),0) scale(var(--nearScale));
+  filter:saturate(1.045) contrast(1.018);
+}
+#fore{
+  background-image:url("assets/foreground.png");
+  transform:translate3d(calc(var(--nearX)*1.18),calc(var(--nearY)*1.15),0) scale(calc(var(--nearScale)*1.01));
+  filter:saturate(1.05) contrast(1.02) brightness(.99);
+}
+
+/* physical window aperture */
+#frame{position:absolute;inset:0;pointer-events:none}
+#top{position:absolute;left:0;right:0;top:0;height:max(2.6vh,env(safe-area-inset-top));background:#0a0c10f2}
+#left{position:absolute;left:0;top:0;bottom:0;width:2.2vw;background:linear-gradient(90deg,#090b0f,#171a20)}
+#rightFrame{position:absolute;right:0;top:0;bottom:0;width:1.4vw;background:linear-gradient(90deg,#171a20,#090b0f)}
+#mullion{position:absolute;left:31%;top:0;bottom:0;width:8px;background:linear-gradient(90deg,#0a0c10,#20242b,#0a0c10);box-shadow:0 0 7px #0008}
+#sill{position:absolute;left:0;right:0;bottom:0;height:4vh;background:linear-gradient(#181b21,#0b0d11);box-shadow:0 -4px 12px #0007}
+#glassShade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.02),transparent 30%,rgba(2,4,8,.08));pointer-events:none}
+
+#hud{position:absolute;left:12px;right:12px;top:max(10px,env(safe-area-inset-top));display:flex;justify-content:space-between;gap:8px;z-index:5}
+.card{background:#05070b8c;border:1px solid #ffffff20;border-radius:14px;padding:9px 11px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#title{font-size:13px;font-weight:800}#sub{font-size:10.3px;color:#ffffffc2;margin-top:3px}#read{font-size:10.3px;line-height:1.45;text-align:right;min-width:108px;font-variant-numeric:tabular-nums}
+#camwrap{position:absolute;right:12px;top:92px;width:84px;height:112px;border-radius:14px;overflow:hidden;border:1px solid #ffffff20;display:none;background:#000;z-index:5}
+#cam{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+#hint{position:absolute;left:12px;right:12px;bottom:62px;background:#05070a7a;border:1px solid #ffffff10;padding:7px 10px;border-radius:12px;font-size:10.2px;text-align:center;color:#ffffffcc;z-index:5}
+#ctrl{position:absolute;left:12px;right:12px;bottom:max(10px,env(safe-area-inset-bottom));display:flex;gap:8px;z-index:5}
+button{flex:1;border:1px solid #ffffff1f;background:#090c11d8;color:#fff;padding:11px;border-radius:13px;font-weight:700;backdrop-filter:blur(12px)}
+#status{position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);background:#05070bea;padding:10px 12px;border-radius:12px;font-size:11px;opacity:0;transition:.2s;max-width:82%;text-align:center;z-index:8}
+.show{opacity:1!important}
+.debugOff #read,.debugOff #camwrap,.debugOff #hint{display:none!important}
+.debugOff #hud{right:auto}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="window">
+    <div id="bg" class="layer"></div>
+    <div id="mid" class="layer"></div>
+    <div id="emp" class="layer"></div>
+    <div id="right" class="layer"></div>
+    <div id="fore" class="layer"></div>
+    <div id="glassShade"></div>
+    <div id="frame"><div id="top"></div><div id="left"></div><div id="rightFrame"></div><div id="mullion"></div><div id="sill"></div></div>
+  </div>
+
+  <div id="hud">
+    <div class="card">
+      <div id="title">IMMERSIVE WINDOW — S2.5</div>
+      <div id="sub">Head-coupled perspective · Face Tracking</div>
+    </div>
+    <div id="read" class="card">X 0<br>Y 0<br>Z 0<br>MODE SAFE</div>
+  </div>
+
+  <div id="camwrap"><video id="cam" autoplay muted playsinline></video></div>
+  <div id="hint">Giữ iPhone cố định. Calibrate ở tư thế tự nhiên rồi dịch đầu trái/phải 10–20 cm.</div>
+  <div id="ctrl">
+    <button id="start">Bật Face Tracking</button>
+    <button id="cal">Calibrate</button>
+    <button id="debug">Ẩn Debug</button>
+  </div>
+  <div id="status"></div>
+</div>
+
+<script type="module">
+import {FilesetResolver,FaceDetector} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/+esm";
+
+const root=document.documentElement, app=document.querySelector("#app");
+const cam=document.querySelector("#cam"),camw=document.querySelector("#camwrap");
+const start=document.querySelector("#start"),cal=document.querySelector("#cal"),debug=document.querySelector("#debug");
+const read=document.querySelector("#read"),status=document.querySelector("#status");
+
+let det=null,running=false,last=-1,base=null;
+let hx=0,hy=0,hz=0,seen=0,debugOn=true;
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,k)=>a+(b-a)*k;
+
+function toast(s){
+  status.textContent=s;status.classList.add("show");
+  setTimeout(()=>status.classList.remove("show"),1500)
+}
+function apply(mode){
+  /* Head-coupled rule:
+     move head left -> world shifts right, revealing more right-side scene.
+     move head up -> world shifts down, revealing more lower scene.
+     move head closer -> stronger scale/parallax.
+  */
+  const baseScale = 1.085 + hz*0.0014;
+  const farScale  = baseScale;
+  const midScale  = baseScale + hz*0.00025;
+  const worldScale= baseScale + hz*0.00050;
+  const nearScale = baseScale + hz*0.00085;
+
+  root.style.setProperty("--farX", `${hx*0.22}px`);
+  root.style.setProperty("--farY", `${-hy*0.12}px`);
+  root.style.setProperty("--midX", `${hx*0.52}px`);
+  root.style.setProperty("--midY", `${-hy*0.28}px`);
+  root.style.setProperty("--worldX", `${hx*0.90}px`);
+  root.style.setProperty("--worldY", `${-hy*0.48}px`);
+  root.style.setProperty("--nearX", `${hx*1.35}px`);
+  root.style.setProperty("--nearY", `${-hy*0.72}px`);
+
+  root.style.setProperty("--farScale", farScale.toFixed(4));
+  root.style.setProperty("--midScale", midScale.toFixed(4));
+  root.style.setProperty("--worldScale", worldScale.toFixed(4));
+  root.style.setProperty("--nearScale", nearScale.toFixed(4));
+
+  read.innerHTML=`X ${Math.round(hx*4)} mm<br>Y ${Math.round(hy*3)} mm<br>Z ${Math.round(hz*3)} mm<br>MODE ${mode}`;
+}
+
+async function init(){
+  if(det)return;
+  toast("Đang tải Face Detector...");
+  const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm");
+  det=await FaceDetector.createFromOptions(vision,{
+    baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite"},
+    runningMode:"VIDEO",
+    minDetectionConfidence:.58
+  });
+}
+
+function setBase(b){
+  base={
+    cx:(b.originX+b.width/2)/cam.videoWidth,
+    cy:(b.originY+b.height/2)/cam.videoHeight,
+    w:b.width/cam.videoWidth
+  };
+  hx=hy=hz=0;
+  apply("FACE");
+  toast("Đã calibrate");
+}
+
+async function begin(){
+  try{
+    await init();
+    const stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:"user",width:{ideal:640},height:{ideal:480},frameRate:{ideal:30,max:30}},
+      audio:false
+    });
+    cam.srcObject=stream;
+    await cam.play();
+    camw.style.display="block";
+    running=true;
+    start.textContent="Face Tracking: ON";
+    requestAnimationFrame(loop);
+  }catch(e){
+    console.error(e);
+    toast("Kiểm tra quyền Camera của Safari rồi tải lại trang.");
+  }
+}
+
+function loop(){
+  if(!running)return;
+
+  if(cam.readyState>=2 && cam.currentTime!==last){
+    last=cam.currentTime;
+    const result=det.detectForVideo(cam,performance.now());
+    const b=result.detections?.[0]?.boundingBox;
+
+    if(b){
+      const cx=(b.originX+b.width/2)/cam.videoWidth;
+      const cy=(b.originY+b.height/2)/cam.videoHeight;
+      const w=b.width/cam.videoWidth;
+
+      seen=performance.now();
+      if(!base)setBase(b);
+
+      const tx=clamp((base.cx-cx)*320,-44,44);
+      const ty=clamp((base.cy-cy)*250,-34,34);
+      const tz=clamp(((w-base.w)/Math.max(.06,base.w))*65,-28,36);
+
+      hx=lerp(hx,tx,.11);
+      hy=lerp(hy,ty,.11);
+      hz=lerp(hz,tz,.10);
+
+      apply("FACE");
+    }
+  }
+
+  if(base && performance.now()-seen>700){
+    hx=lerp(hx,0,.03);hy=lerp(hy,0,.03);hz=lerp(hz,0,.03);
+    apply("SAFE");
+  }
+
+  requestAnimationFrame(loop);
+}
+
+start.onclick=()=>{if(!running)begin()};
+cal.onclick=()=>{base=null;toast("Nhìn thẳng vào camera để calibrate lại")};
+debug.onclick=()=>{
+  debugOn=!debugOn;
+  app.classList.toggle("debugOff",!debugOn);
+  debug.textContent=debugOn?"Ẩn Debug":"Hiện Debug";
+};
+
+apply("SAFE");
+</script>
+</body>
+</html>
