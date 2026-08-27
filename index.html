@@ -1,156 +1,65 @@
-<!doctype html>
-<html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#0b0d12">
-<title>Immersive Window S1 Mobile</title>
+<!doctype html><html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Immersive Window S2</title>
 <style>
-  :root{
-    --eye-x:0;
-    --eye-y:0;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090a0d;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;color:white}
-  #app{position:relative;width:100%;height:100%;overflow:hidden;background:#0a0c10;touch-action:none}
-  #scene{position:absolute;inset:0;perspective:900px;overflow:hidden;background:
-    radial-gradient(circle at 72% 45%, rgba(255,151,82,.85), rgba(255,117,77,.25) 18%, transparent 34%),
-    linear-gradient(#8bb7db 0%,#ddafaa 38%,#f29769 64%,#52627a 100%);
-  }
-  #skyGlow{position:absolute;inset:-12%;background:
-      radial-gradient(circle at calc(74% + var(--eye-x)*2%), calc(55% + var(--eye-y)*1%), rgba(255,196,124,.9) 0 3%, rgba(255,118,70,.38) 10%, transparent 27%);
-      filter:blur(1px);transform:translate(calc(var(--eye-x)*-1px),calc(var(--eye-y)*-.5px))}
-  .cloud{position:absolute;border-radius:999px;background:rgba(255,255,255,.12);filter:blur(9px)}
-  .c1{width:65%;height:10%;left:9%;top:14%;transform:translateX(calc(var(--eye-x)*-0.08px))}
-  .c2{width:50%;height:8%;left:45%;top:26%;transform:translateX(calc(var(--eye-x)*-0.05px))}
-  .layer{position:absolute;left:-10%;right:-10%;bottom:0;will-change:transform}
-  #far{height:43%;transform:translate(calc(var(--eye-x)*-0.10px),calc(var(--eye-y)*0.05px)) scale(1.02)}
-  #mid{height:48%;transform:translate(calc(var(--eye-x)*-0.35px),calc(var(--eye-y)*0.12px)) scale(1.04)}
-  #near{height:57%;transform:translate(calc(var(--eye-x)*-0.75px),calc(var(--eye-y)*0.22px)) scale(1.08)}
-  .building{position:absolute;bottom:0;background:linear-gradient(90deg,#121823,#1c2430 55%,#10151c);border-top-left-radius:2px;border-top-right-radius:2px;box-shadow:inset -2px 0 rgba(255,255,255,.03)}
-  .building:after{content:"";position:absolute;inset:8% 12%;background:
-    repeating-linear-gradient(0deg, transparent 0 11px, rgba(255,217,135,.27) 12px 14px),
-    repeating-linear-gradient(90deg, transparent 0 12px, rgba(255,217,135,.18) 13px 15px);
-    opacity:.55;mix-blend-mode:screen}
-  .farb{background:#273342;opacity:.78}
-  .midb{background:#19222e}
-  .nearb{background:#111720}
-  #horizon{position:absolute;left:0;right:0;bottom:39%;height:1px;background:rgba(255,201,150,.25);transform:translateY(calc(var(--eye-y)*0.12px))}
-  #windowFrame{position:absolute;inset:0;pointer-events:none}
-  #windowFrame:before,#windowFrame:after{content:"";position:absolute;background:#111317;box-shadow:0 0 0 1px rgba(255,255,255,.03)}
-  #windowFrame:before{left:0;top:0;bottom:0;width:5.5vw}
-  #windowFrame:after{left:0;right:0;top:0;height:max(4.5vh,env(safe-area-inset-top))}
-  #mullion{position:absolute;left:31%;top:0;bottom:0;width:2.6vw;background:linear-gradient(90deg,#0d0f12,#181b20,#0d0f12);box-shadow:0 0 20px rgba(0,0,0,.5)}
-  #sill{position:absolute;left:0;right:0;bottom:0;height:6.5vh;background:linear-gradient(#14171b,#0c0d10);box-shadow:0 -4px 14px rgba(0,0,0,.45)}
-  #bed{position:absolute;left:-8%;right:-8%;bottom:-7%;height:26%;background:radial-gradient(ellipse at 52% 15%,#32363d 0,#1d2026 42%,#111319 80%);border-radius:50% 50% 0 0/25% 25% 0 0;filter:drop-shadow(0 -12px 30px rgba(0,0,0,.25));pointer-events:none}
-  #hud{position:absolute;left:14px;right:14px;top:max(12px,env(safe-area-inset-top));display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none}
-  .card{background:rgba(5,7,10,.46);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 12px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
-  #title{font-weight:700;font-size:14px;letter-spacing:.2px}
-  #sub{font-size:11px;color:rgba(255,255,255,.72);margin-top:3px;line-height:1.3}
-  #readout{font-variant-numeric:tabular-nums;font-size:11px;line-height:1.45;text-align:right}
-  #controls{position:absolute;left:14px;right:14px;bottom:max(14px,env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;justify-content:space-between}
-  button{appearance:none;border:1px solid rgba(255,255,255,.18);background:rgba(10,13,18,.62);color:white;padding:11px 13px;border-radius:14px;font-weight:600;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-  #hint{font-size:11px;color:rgba(255,255,255,.78);background:rgba(6,7,10,.42);padding:9px 11px;border-radius:12px;border:1px solid rgba(255,255,255,.08)}
-  #status{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);background:rgba(5,6,8,.72);padding:10px 13px;border-radius:12px;font-size:12px;opacity:0;transition:.25s;pointer-events:none}
-  .show{opacity:1!important}
-</style>
-</head>
-<body>
-<div id="app">
-  <div id="scene">
-    <div id="skyGlow"></div><div class="cloud c1"></div><div class="cloud c2"></div>
-    <div id="horizon"></div>
-    <div id="far" class="layer">
-      <div class="building farb" style="left:2%;width:7%;height:44%"></div>
-      <div class="building farb" style="left:11%;width:8%;height:58%"></div>
-      <div class="building farb" style="left:22%;width:5%;height:52%"></div>
-      <div class="building farb" style="left:30%;width:8%;height:68%"></div>
-      <div class="building farb" style="left:41%;width:6%;height:63%"></div>
-      <div class="building farb" style="left:49%;width:8%;height:75%"></div>
-      <div class="building farb" style="left:60%;width:7%;height:54%"></div>
-      <div class="building farb" style="left:70%;width:5%;height:89%"></div>
-      <div class="building farb" style="left:78%;width:9%;height:61%"></div>
-      <div class="building farb" style="left:90%;width:7%;height:70%"></div>
-    </div>
-    <div id="mid" class="layer">
-      <div class="building midb" style="left:0%;width:11%;height:42%"></div>
-      <div class="building midb" style="left:13%;width:10%;height:66%"></div>
-      <div class="building midb" style="left:26%;width:9%;height:49%"></div>
-      <div class="building midb" style="left:39%;width:11%;height:73%"></div>
-      <div class="building midb" style="left:53%;width:10%;height:55%"></div>
-      <div class="building midb" style="left:67%;width:13%;height:68%"></div>
-      <div class="building midb" style="left:84%;width:11%;height:51%"></div>
-    </div>
-    <div id="near" class="layer">
-      <div class="building nearb" style="left:-2%;width:20%;height:37%"></div>
-      <div class="building nearb" style="left:20%;width:15%;height:44%"></div>
-      <div class="building nearb" style="left:73%;width:17%;height:46%"></div>
-      <div class="building nearb" style="left:92%;width:15%;height:61%"></div>
-    </div>
-    <div id="windowFrame"><div id="mullion"></div><div id="sill"></div></div>
-    <div id="bed"></div>
-  </div>
-
-  <div id="hud">
-    <div class="card">
-      <div id="title">IMMERSIVE WINDOW — S1 MOBILE</div>
-      <div id="sub">New York Sunset · mô phỏng parallax theo vị trí người xem</div>
-    </div>
-    <div id="readout" class="card">X 0 mm<br>Y 0 mm<br>MODE TOUCH</div>
-  </div>
-
-  <div id="controls">
-    <div id="hint">Kéo ngón tay để đổi góc nhìn · chạm 2 lần để reset</div>
-    <button id="sensorBtn">Bật cảm biến</button>
-  </div>
-  <div id="status"></div>
-</div>
-<script>
-(()=>{
-  const root=document.documentElement, app=document.getElementById('app'), readout=document.getElementById('readout');
-  const btn=document.getElementById('sensorBtn'), status=document.getElementById('status');
-  let ex=0, ey=0, mode='TOUCH', dragging=false, lastX=0,lastY=0, tapTime=0;
-  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  function apply(){
-    root.style.setProperty('--eye-x',ex.toFixed(2));
-    root.style.setProperty('--eye-y',ey.toFixed(2));
-    readout.innerHTML=`X ${(ex*5).toFixed(0)} mm<br>Y ${(-ey*4).toFixed(0)} mm<br>MODE ${mode}`;
-  }
-  function toast(s){status.textContent=s;status.classList.add('show');setTimeout(()=>status.classList.remove('show'),1500)}
-  function reset(){ex=0;ey=0;apply();toast('Đã reset hero viewpoint')}
-  app.addEventListener('pointerdown',e=>{
-    dragging=true; lastX=e.clientX;lastY=e.clientY;
-    const now=Date.now(); if(now-tapTime<300) reset(); tapTime=now;
-  });
-  addEventListener('pointerup',()=>dragging=false);
-  addEventListener('pointercancel',()=>dragging=false);
-  addEventListener('pointermove',e=>{
-    if(!dragging||mode!=='TOUCH')return;
-    ex=clamp(ex+(e.clientX-lastX)*0.55,-70,70);
-    ey=clamp(ey+(e.clientY-lastY)*0.45,-55,55);
-    lastX=e.clientX;lastY=e.clientY;apply();
-  },{passive:false});
-
-  function orientation(e){
-    if(mode!=='SENSOR')return;
-    const gamma=clamp(e.gamma||0,-25,25), beta=clamp((e.beta||0)-45,-25,25);
-    ex=gamma*2.2; ey=beta*1.7; apply();
-  }
-  btn.addEventListener('click',async()=>{
-    try{
-      if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function'){
-        const p=await DeviceOrientationEvent.requestPermission();
-        if(p!=='granted') throw new Error('permission denied');
-      }
-      addEventListener('deviceorientation',orientation,true);
-      mode='SENSOR'; btn.textContent='Cảm biến: ON'; toast('Nghiêng iPhone trái / phải');
-      apply();
-    }catch(err){
-      mode='TOUCH'; btn.textContent='Bật cảm biến'; toast('Không bật được cảm biến — dùng chế độ kéo tay');
-      apply();
-    }
-  });
-  apply();
-})();
-</script>
-</body></html>
+:root{--x:0;--y:0;--z:0}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090b10;color:white;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}#app{position:relative;width:100%;height:100%;overflow:hidden}
+#scene{position:absolute;inset:0;background:radial-gradient(circle at 72% 52%,#ffd08b 0 3%,#f78d5b 16%,transparent 30%),linear-gradient(#86acd0,#d6aeb2 40%,#f3976c 68%,#526276)}
+.layer{position:absolute;left:-12%;right:-12%;bottom:0;will-change:transform}.b{position:absolute;bottom:0;background:#17202a;border-radius:2px 2px 0 0}.b:after{content:"";position:absolute;inset:8% 12%;background:repeating-linear-gradient(0deg,transparent 0 11px,#ffd98a3a 12px 14px),repeating-linear-gradient(90deg,transparent 0 12px,#ffd98a2c 13px 15px)}
+#far{height:43%;transform:translate(calc(var(--x)*-.10px),calc(var(--y)*.06px)) scale(calc(1.02 + var(--z)*.00010))}
+#mid{height:49%;transform:translate(calc(var(--x)*-.34px),calc(var(--y)*.13px)) scale(calc(1.04 + var(--z)*.00018))}
+#near{height:58%;transform:translate(calc(var(--x)*-.78px),calc(var(--y)*.24px)) scale(calc(1.08 + var(--z)*.00028))}
+#frame:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5.5vw;background:#111318}#mullion{position:absolute;left:31%;top:0;bottom:0;width:2.7vw;background:#111319;box-shadow:0 0 18px #000b}#sill{position:absolute;left:0;right:0;bottom:0;height:6vh;background:#101319}
+#bed{position:absolute;left:-8%;right:-8%;bottom:-8%;height:25%;background:radial-gradient(ellipse at 50% 12%,#343a43,#1b1f25 55%,#101319 85%);border-radius:50% 50% 0 0/25% 25% 0 0}
+#hud{position:absolute;left:12px;right:12px;top:max(12px,env(safe-area-inset-top));display:flex;justify-content:space-between;gap:8px}.card{background:#07090db5;border:1px solid #ffffff22;border-radius:14px;padding:10px 12px;backdrop-filter:blur(12px)}#title{font-size:13px;font-weight:800}#sub,#read{font-size:10.5px;line-height:1.4;color:#ffffffc0}#read{text-align:right;min-width:96px}
+#camwrap{position:absolute;right:12px;top:92px;width:92px;height:124px;border-radius:14px;overflow:hidden;border:1px solid #ffffff24;display:none;background:#000}video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+#controls{position:absolute;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:8px}button{flex:1;border:1px solid #ffffff24;background:#0a0d12d9;color:white;padding:12px;border-radius:13px;font-weight:700}
+#hint{position:absolute;left:12px;right:12px;bottom:68px;background:#05070aa0;border:1px solid #ffffff18;padding:8px 10px;border-radius:12px;font-size:10.5px;text-align:center}
+#status{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);background:#05070be8;padding:10px 12px;border-radius:12px;font-size:11px;opacity:0;transition:.2s;max-width:80%;text-align:center}.show{opacity:1}
+</style></head><body><div id="app"><div id="scene">
+<div id="far" class="layer">
+<div class="b" style="left:2%;width:7%;height:44%;opacity:.7"></div><div class="b" style="left:12%;width:8%;height:61%;opacity:.7"></div><div class="b" style="left:25%;width:8%;height:52%;opacity:.7"></div><div class="b" style="left:38%;width:8%;height:72%;opacity:.7"></div><div class="b" style="left:51%;width:8%;height:60%;opacity:.7"></div><div class="b" style="left:65%;width:7%;height:88%;opacity:.7"></div><div class="b" style="left:77%;width:9%;height:64%;opacity:.7"></div><div class="b" style="left:90%;width:7%;height:72%;opacity:.7"></div></div>
+<div id="mid" class="layer"><div class="b" style="left:0%;width:11%;height:43%"></div><div class="b" style="left:14%;width:11%;height:67%"></div><div class="b" style="left:30%;width:10%;height:50%"></div><div class="b" style="left:44%;width:12%;height:75%"></div><div class="b" style="left:61%;width:11%;height:56%"></div><div class="b" style="left:78%;width:13%;height:70%"></div></div>
+<div id="near" class="layer"><div class="b" style="left:-2%;width:20%;height:36%;background:#10161d"></div><div class="b" style="left:20%;width:15%;height:45%;background:#10161d"></div><div class="b" style="left:74%;width:18%;height:47%;background:#10161d"></div><div class="b" style="left:94%;width:16%;height:61%;background:#10161d"></div></div>
+<div id="frame"><div id="mullion"></div><div id="sill"></div></div><div id="bed"></div></div>
+<div id="hud"><div class="card"><div id="title">IMMERSIVE WINDOW — S2</div><div id="sub">Face Tracking · New York Sunset</div></div><div id="read" class="card">X 0 mm<br>Y 0 mm<br>Z 0 mm<br>MODE SAFE</div></div>
+<div id="camwrap"><video id="cam" autoplay muted playsinline></video></div>
+<div id="hint">Đặt iPhone cố định. Bật camera rồi dịch đầu trái/phải, lên/xuống, tiến/lùi.</div>
+<div id="controls"><button id="start">Bật Face Tracking</button><button id="cal">Calibrate</button></div><div id="status"></div></div>
+<script type="module">
+import {FilesetResolver,FaceDetector} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/+esm";
+const root=document.documentElement,cam=document.getElementById("cam"),wrap=document.getElementById("camwrap"),start=document.getElementById("start"),cal=document.getElementById("cal"),read=document.getElementById("read"),status=document.getElementById("status");
+let det=null,running=false,last=-1,base=null,fx=0,fy=0,fz=0,lastSeen=0;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,k)=>a+(b-a)*k;
+function toast(s){status.textContent=s;status.classList.add("show");setTimeout(()=>status.classList.remove("show"),1600)}
+function apply(mode){root.style.setProperty("--x",fx.toFixed(2));root.style.setProperty("--y",fy.toFixed(2));root.style.setProperty("--z",fz.toFixed(2));read.innerHTML=`X ${(fx*4).toFixed(0)} mm<br>Y ${(-fy*3).toFixed(0)} mm<br>Z ${(fz*3).toFixed(0)} mm<br>MODE ${mode}`}
+async function init(){
+ if(det)return;
+ toast("Đang tải Face Detector...");
+ const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm");
+ det=await FaceDetector.createFromOptions(vision,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite"},runningMode:"VIDEO",minDetectionConfidence:.55});
+}
+function setBase(b){base={cx:(b.originX+b.width/2)/cam.videoWidth,cy:(b.originY+b.height/2)/cam.videoHeight,w:b.width/cam.videoWidth};fx=fy=fz=0;apply("FACE");toast("Đã calibrate")}
+async function begin(){
+ try{
+   await init();
+   const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:640},height:{ideal:480},frameRate:{ideal:30,max:30}},audio:false});
+   cam.srcObject=s;await cam.play();wrap.style.display="block";running=true;start.textContent="Face Tracking: ON";requestAnimationFrame(loop);
+ }catch(e){console.error(e);toast("Không bật được camera/model. Kiểm tra quyền Camera trong Safari rồi tải lại trang.")}
+}
+function loop(){
+ if(!running)return;
+ if(cam.readyState>=2&&cam.currentTime!==last){
+   last=cam.currentTime;
+   const r=det.detectForVideo(cam,performance.now()),d=r.detections?.[0],b=d?.boundingBox;
+   if(b){
+     const cx=(b.originX+b.width/2)/cam.videoWidth,cy=(b.originY+b.height/2)/cam.videoHeight,w=b.width/cam.videoWidth;
+     lastSeen=performance.now();if(!base)setBase(b);
+     const tx=clamp((base.cx-cx)*460,-75,75),ty=clamp((cy-base.cy)*390,-60,60),tz=clamp(((w-base.w)/Math.max(.06,base.w))*120,-55,70);
+     fx=lerp(fx,tx,.22);fy=lerp(fy,ty,.22);fz=lerp(fz,tz,.22);apply("FACE");
+   }
+ }
+ if(base&&performance.now()-lastSeen>700){fx=lerp(fx,0,.05);fy=lerp(fy,0,.05);fz=lerp(fz,0,.05);apply("SAFE")}
+ requestAnimationFrame(loop);
+}
+start.onclick=()=>{if(!running)begin()};cal.onclick=()=>{base=null;toast("Nhìn thẳng vào camera để calibrate lại")};apply("SAFE");
+</script></body></html>
